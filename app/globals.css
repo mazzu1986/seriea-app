@@ -1,0 +1,67 @@
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+/* --- Serie A UI --- */
+:root{--bg:#f6f7fb;--text:#111;--muted:#667;--card:#fff;--line:#e7e8ef;}
+html,body{background:var(--bg);color:var(--text);}
+.main{max-width:1100px;margin:24px auto;padding:0 16px;}
+.h1{font-weight:700;font-size:28px;margin:0 0 16px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.title{font-weight:600;}
+.time{font-size:12px;color:var(--muted);}
+.section{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+.box{background:#fafbff;border:1px solid var(--line);border-radius:10px;padding:10px;}
+.box .k{font-weight:600;margin-bottom:6px;}
+.kv{display:flex;justify-content:space-between;font-size:13px;line-height:1.6;}
+.pill{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px;margin-top:10px;}
+.sub{font-size:12px;color:var(--muted);margin-top:10px;}
+.bar{height:6px;background:#e9ecf5;border-radius:999px;overflow:hidden;margin-top:4px;}
+.bar > i{display:block;height:100%;background:#2f6df6;/* default */ width:0%;}
+.odds{display:grid;grid-template-columns:repeat(3,auto);gap:8px;margin-top:6px;font-size:13px;}
+.tag{display:inline-block;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:#2f6df6;background:#eef3ff;}
+/* colori dinamici per percentuali */
+.val {font-weight:600;}
+.val.green {color:#059669;}   /* verde */
+.val.yellow {color:#ca8a04;}  /* giallo */
+.val.red {color:#dc2626;}     /* rosso */
