@@ -65,3 +65,16 @@ html,body{background:var(--bg);color:var(--text);}
 .val.green {color:#059669;}   /* verde */
 .val.yellow {color:#ca8a04;}  /* giallo */
 .val.red {color:#dc2626;}     /* rosso */
+.bar {
+  height: 6px;
+  border-radius: 9999px;
+  background: #eceff3;
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+}
+

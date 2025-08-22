@@ -1,0 +1,13 @@
+{
+  "name": "SerieA App",
+  "short_name": "SerieA",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "icons": [
+    { "src": "/icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icons/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}

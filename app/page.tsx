@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-/** --- TENDINA CAMPIONATI --- */
+/** — Leghe disponibili — */
 const LEAGUES = [
   { code: "SA",  name: "Serie A" },
   { code: "PL",  name: "Premier League" },
@@ -11,9 +11,12 @@ const LEAGUES = [
   { code: "SD",  name: "La Liga 2" },
   { code: "BL1", name: "Bundesliga" },
   { code: "DED", name: "Eredivisie (Olanda 1)" },
+  { code: "BJL", name: "Jupiler Pro League (Belgio 1)" },
   { code: "PPL", name: "Primeira Liga (Portogallo 1)" },
+  { code: "TSL", name: "Süper Lig (Turchia 1)" },
 ];
 
+/** — Tipi risposta API — */
 type Resp = {
   date: string;
   games: Array<{
@@ -34,12 +37,8 @@ type Resp = {
   }>;
 };
 
+/** — Utilità UI — */
 function pc(x:number){ return Math.round((x || 0) * 100); }
-
-function Bar({ v }: { v: number }) {
-  const w = Math.max(0, Math.min(100, pc(v)));
-  return <div className="bar"><i style={{ width: `${w}%` }} /></div>;
-}
 
 function colorClass(v:number){
   const p = pc(v);
@@ -48,12 +47,38 @@ function colorClass(v:number){
   return "val red";
 }
 
+// colore barra dinamico
+function barColor(v:number){
+  const p = pc(v);
+  if (p >= 70) return "#16a34a"; // verde
+  if (p >= 40) return "#f59e0b"; // giallo
+  return "#ef4444";             // rosso
+}
+function Bar({ v }: { v: number }) {
+  const w = Math.max(0, Math.min(100, pc(v)));
+  const color = barColor(v);
+  return (
+    <div className="bar">
+      <i style={{ width: `${w}%`, background: color, transition: "width .25s ease" }} />
+    </div>
+  );
+}
+
+/** — Pagina — */
 export default function Page() {
+  // registra il Service Worker (PWA) — QUI dentro al componente
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   const [league, setLeague] = useState<string>("SA");
   const [data, setData] = useState<Resp | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // fetch dati ogni volta che cambia la lega
   useEffect(() => {
     setLoading(true);
     setErr(null);
@@ -72,7 +97,7 @@ export default function Page() {
     <main className="main">
       <h1 className="h1">Predizioni</h1>
 
-      {/* Selettore lega */}
+      {/* Selettore campionato */}
       <div style={{margin:"0 0 12px 0"}}>
         <label style={{fontSize:12,opacity:.7,marginRight:8}}>Campionato</label>
         <select
@@ -113,7 +138,7 @@ export default function Page() {
                   <Bar v={g.perc.ou05_ht}/>
                 </div>
 
-                {/* COLONNA 2 — U/O + GOL/NOGOL */}
+                {/* COLONNA 2 — U/O + GOL/NOGOL (tutti insieme) */}
                 <div className="box">
                   <div className="k">Under/Over</div>
 
@@ -164,4 +189,5 @@ export default function Page() {
     </main>
   );
 }
+
 
