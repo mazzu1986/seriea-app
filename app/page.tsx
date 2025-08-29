@@ -77,6 +77,9 @@ export default function Page() {
   const [data, setData] = useState<Resp | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [corners, setCorners] = useState<Record<number, {home:number|null,away:number|null}>>({});
+  const [loadingCorners, setLoadingCorners] = useState<Record<number, boolean>>({});
+
 
   // fetch dati ogni volta che cambia la lega
   useEffect(() => {
@@ -174,6 +177,27 @@ export default function Page() {
               <div className="sub">
                 Risultato esatto più probabile: <b>{g.bestScore.h}–{g.bestScore.a}</b> ({pc(g.bestScore.p)}%)
               </div>
+{/* ⬇️ Aggiungi questo blocco */}
+<div className="sub" style={{ marginTop: 6 }}>
+  <button
+    onClick={() => fetchCornersFor(g)}
+    disabled={!!loadingCorners[g.id]}
+    style={{ padding: "4px 8px", border: "1px solid #e7e8ef", borderRadius: 8, cursor: "pointer" }}
+  >
+    {loadingCorners[g.id] ? "Carico corner…" : "Corner"}
+  </button>
+
+  {corners[g.id] && (
+    <span style={{ marginLeft: 10 }}>
+      Corner: {corners[g.id]?.home ?? "—"} - {corners[g.id]?.away ?? "—"}
+    </span>
+  )}
+</div>
+{/* ⬆️ Fino a qui */}
+
+<div className="sub" style={{marginTop:6}}>
+  Ultime 5 (tot gol): casa [...]
+</div>
 
               <div className="sub" style={{marginTop:6}}>
                 Ultime 5 (tot gol): casa [
