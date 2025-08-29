@@ -39,20 +39,17 @@ type Resp = {
 
 /** — Utilità UI — */
 function pc(x:number){ return Math.round((x || 0) * 100); }
-
 function colorClass(v:number){
   const p = pc(v);
   if (p >= 70) return "val green";
   if (p >= 40) return "val yellow";
   return "val red";
 }
-
-// colore barra dinamico
 function barColor(v:number){
   const p = pc(v);
   if (p >= 70) return "#16a34a"; // verde
   if (p >= 40) return "#f59e0b"; // giallo
-  return "#ef4444";             // rosso
+  return "#ef4444";              // rosso
 }
 function Bar({ v }: { v: number }) {
   const w = Math.max(0, Math.min(100, pc(v)));
@@ -66,7 +63,7 @@ function Bar({ v }: { v: number }) {
 
 /** — Pagina — */
 export default function Page() {
-  // registra il Service Worker (PWA) — QUI dentro al componente
+  // PWA: registra il Service Worker
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -77,11 +74,16 @@ export default function Page() {
   const [data, setData] = useState<Resp | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [corners, setCorners] = useState<Record<number, {home:number|null,away:number|null}>>({});
+
+  // Corner (match del giorno)
+  const [corners, setCorners] = useState<Record<number, { home:number|null, away:number|null }>>({});
   const [loadingCorners, setLoadingCorners] = useState<Record<number, boolean>>({});
 
+  // Corner (medie: casa per home, trasferta per away)
+  const [cornerAvg, setCornerAvg] = useState<Record<number, { h:number|null, a:number|null, hn:number, an:number }>>({});
+  const [loadingAvg, setLoadingAvg] = useState<Record<number, boolean>>({});
 
-  // fetch dati ogni volta che cambia la lega
+  // carica dati predizioni quando cambia lega
   useEffect(() => {
     setLoading(true);
     setErr(null);
@@ -95,6 +97,64 @@ export default function Page() {
       .catch(e => setErr(String(e)))
       .finally(() => setLoading(false));
   }, [league]);
+
+  // --- Corner (match) ---
+  function fetchCornersFor(g: { id:number; date:string; home:string; away:string }) {
+    const d = new Date(g.date);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const date = `${yyyy}-${mm}-${dd}`;
+
+    setLoadingCorners(s => ({ ...s, [g.id]: true }));
+    const url = `/api/corners?code=${encodeURIComponent(league)}&date=${date}&home=${encodeURIComponent(g.home)}&away=${encodeURIComponent(g.away)}`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(j => {
+        if (j?.found && j?.corners) {
+          setCorners(s => ({ ...s, [g.id]: j.corners }));
+        } else {
+          setCorners(s => ({ ...s, [g.id]: { home: null, away: null } }));
+        }
+      })
+      .catch(() => {
+        setCorners(s => ({ ...s, [g.id]: { home: null, away: null } }));
+      })
+      .finally(() => {
+        setLoadingCorners(s => ({ ...s, [g.id]: false }));
+      });
+  }
+
+  // --- Corner (medie) ---
+  function fetchCornerAverages(g: { id:number; home:string; away:string }) {
+    setLoadingAvg(s => ({ ...s, [g.id]: true }));
+    const url = `/api/corners/avg?code=${encodeURIComponent(league)}&home=${encodeURIComponent(g.home)}&away=${encodeURIComponent(g.away)}&takeLast=8`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(j => {
+        if (j?.found && j?.averages) {
+          setCornerAvg(s => ({
+            ...s,
+            [g.id]: {
+              h: j.averages.homeCornersHomeAvg,
+              a: j.averages.awayCornersAwayAvg,
+              hn: j.averages.homeSamples,
+              an: j.averages.awaySamples,
+            }
+          }));
+        } else {
+          setCornerAvg(s => ({ ...s, [g.id]: { h: null, a: null, hn: 0, an: 0 } }));
+        }
+      })
+      .catch(() => {
+        setCornerAvg(s => ({ ...s, [g.id]: { h: null, a: null, hn: 0, an: 0 } }));
+      })
+      .finally(() => {
+        setLoadingAvg(s => ({ ...s, [g.id]: false }));
+      });
+  }
 
   return (
     <main className="main">
@@ -141,7 +201,7 @@ export default function Page() {
                   <Bar v={g.perc.ou05_ht}/>
                 </div>
 
-                {/* COLONNA 2 — U/O + GOL/NOGOL (tutti insieme) */}
+                {/* COLONNA 2 — U/O + GOL/NOGOL */}
                 <div className="box">
                   <div className="k">Under/Over</div>
 
@@ -177,27 +237,38 @@ export default function Page() {
               <div className="sub">
                 Risultato esatto più probabile: <b>{g.bestScore.h}–{g.bestScore.a}</b> ({pc(g.bestScore.p)}%)
               </div>
-{/* ⬇️ Aggiungi questo blocco */}
-<div className="sub" style={{ marginTop: 6 }}>
-  <button
-    onClick={() => fetchCornersFor(g)}
-    disabled={!!loadingCorners[g.id]}
-    style={{ padding: "4px 8px", border: "1px solid #e7e8ef", borderRadius: 8, cursor: "pointer" }}
-  >
-    {loadingCorners[g.id] ? "Carico corner…" : "Corner"}
-  </button>
 
-  {corners[g.id] && (
-    <span style={{ marginLeft: 10 }}>
-      Corner: {corners[g.id]?.home ?? "—"} - {corners[g.id]?.away ?? "—"}
-    </span>
-  )}
-</div>
-{/* ⬆️ Fino a qui */}
+              {/* Corner: medie e match */}
+              <div className="sub" style={{ marginTop: 6 }}>
+                <button
+                  onClick={() => fetchCornerAverages(g)}
+                  disabled={!!loadingAvg[g.id]}
+                  style={{ padding: "4px 8px", border: "1px solid #e7e8ef", borderRadius: 8, cursor: "pointer", marginRight: 8 }}
+                >
+                  {loadingAvg[g.id] ? "Calcolo medie corner…" : "Corner (medie)"}
+                </button>
 
-<div className="sub" style={{marginTop:6}}>
-  Ultime 5 (tot gol): casa [...]
-</div>
+                {cornerAvg[g.id] && (
+                  <span style={{ marginRight: 12 }}>
+                    Medie — <b>{g.home}</b> casa: <b>{cornerAvg[g.id]?.h ?? "—"}</b> (n={cornerAvg[g.id]?.hn}) ·{" "}
+                    <b>{g.away}</b> trasferta: <b>{cornerAvg[g.id]?.a ?? "—"}</b> (n={cornerAvg[g.id]?.an})
+                  </span>
+                )}
+
+                <button
+                  onClick={() => fetchCornersFor(g)}
+                  disabled={!!loadingCorners[g.id]}
+                  style={{ padding: "4px 8px", border: "1px solid #e7e8ef", borderRadius: 8, cursor: "pointer", marginLeft: 8 }}
+                >
+                  {loadingCorners[g.id] ? "Carico corner…" : "Corner (match)"}
+                </button>
+
+                {corners[g.id] && (
+                  <span style={{ marginLeft: 10 }}>
+                    Corner: {corners[g.id]?.home ?? "—"} - {corners[g.id]?.away ?? "—"}
+                  </span>
+                )}
+              </div>
 
               <div className="sub" style={{marginTop:6}}>
                 Ultime 5 (tot gol): casa [
@@ -213,5 +284,3 @@ export default function Page() {
     </main>
   );
 }
-
-
